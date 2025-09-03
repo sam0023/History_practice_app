@@ -1,0 +1,16 @@
+.chapters {
+  padding: 20px;
+}
+
+.chapter-card {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin: 8px 0;
+  background: #f9f9f9;
+  border-radius: 6px;
+  text-align: left;
+}
+
+.chapter-card button {
+  margin-right: 8px;
+}

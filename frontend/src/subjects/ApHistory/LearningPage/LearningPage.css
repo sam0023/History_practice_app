@@ -1,0 +1,22 @@
+.learning-page {
+  padding: 20px;
+}
+
+.learning-page input {
+  margin-right: 10px;
+  padding: 6px;
+}
+
+.learning-page button {
+  margin: 5px;
+}
+
+.subtopic-card {
+  border: 1px solid #ddd;
+  margin: 10px 0;
+  padding: 12px;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  text-align: left;
+}
