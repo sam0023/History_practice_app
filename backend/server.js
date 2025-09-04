@@ -50,6 +50,10 @@ const Subtopic = mongoose.model('Subtopic', SubtopicSchema);
 const Note = mongoose.model('Note', NoteSchema);
 
 // Routes
+app.get('/', (req, res) => {
+  res.send('Backend is running ✅');
+});
+
 app.get('/chapters/:period', async (req, res) => {
   const chapters = await Chapter.find({ period: req.params.period }).sort(
     'order'
