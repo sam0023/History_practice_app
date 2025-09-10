@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-
-const API_BASE = 'http://localhost:5000';
+import { api } from '../apiClient'; // ✅ use helper functions
 
 function LearningPage() {
   const { id } = useParams(); // chapterId
@@ -10,44 +9,57 @@ function LearningPage() {
   const [editSubId, setEditSubId] = useState(null);
   const [editSubName, setEditSubName] = useState('');
 
+  // Fetch subtopics of chapter
   useEffect(() => {
-    fetch(`${API_BASE}/subtopics/${id}`)
-      .then((res) => res.json())
-      .then(setSubtopics);
+    api
+      .get(`/subtopics/${id}`)
+      .then(setSubtopics)
+      .catch((err) => console.error('Error fetching subtopics:', err));
   }, [id]);
 
+  // Add new subtopic
   const addSubtopic = async () => {
     if (!newSubtopicName.trim()) return;
-    const res = await fetch(`${API_BASE}/subtopics`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chapterId: id, name: newSubtopicName }),
-    });
-    const data = await res.json();
-    setSubtopics([...subtopics, data]);
-    setNewSubtopicName('');
+    try {
+      const data = await api.post('/subtopics', {
+        chapterId: id,
+        name: newSubtopicName,
+      });
+      setSubtopics([...subtopics, data]);
+      setNewSubtopicName('');
+    } catch (error) {
+      console.error('Error adding subtopic:', error);
+    }
   };
 
+  // Delete subtopic
   const deleteSubtopic = async (subId) => {
-    await fetch(`${API_BASE}/subtopics/${subId}`, { method: 'DELETE' });
-    setSubtopics(subtopics.filter((s) => s._id !== subId));
+    try {
+      await api.del(`/subtopics/${subId}`);
+      setSubtopics(subtopics.filter((s) => s._id !== subId));
+    } catch (error) {
+      console.error('Error deleting subtopic:', error);
+    }
   };
 
+  // Start editing
   const startEdit = (sub) => {
     setEditSubId(sub._id);
     setEditSubName(sub.name);
   };
 
+  // Save edit
   const saveEdit = async () => {
-    const res = await fetch(`${API_BASE}/subtopics/${editSubId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: editSubName }),
-    });
-    const updated = await res.json();
-    setSubtopics(subtopics.map((s) => (s._id === updated._id ? updated : s)));
-    setEditSubId(null);
-    setEditSubName('');
+    try {
+      const updated = await api.put(`/subtopics/${editSubId}`, {
+        name: editSubName,
+      });
+      setSubtopics(subtopics.map((s) => (s._id === updated._id ? updated : s)));
+      setEditSubId(null);
+      setEditSubName('');
+    } catch (error) {
+      console.error('Error updating subtopic:', error);
+    }
   };
 
   return (

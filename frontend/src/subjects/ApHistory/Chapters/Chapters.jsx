@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-
-const API_BASE = 'http://localhost:5000';
+import { api } from '../apiClient'; // ✅ use helper functions
 
 function Chapters() {
   const { period } = useParams();
@@ -11,59 +10,77 @@ function Chapters() {
   const [editChapterId, setEditChapterId] = useState(null);
   const [editChapterName, setEditChapterName] = useState('');
 
+  // Fetch chapters
   useEffect(() => {
-    fetch(`${API_BASE}/chapters/${period}`)
-      .then((res) => res.json())
-      .then(setChapters);
+    api
+      .get(`/chapters/${period}`)
+      .then(setChapters)
+      .catch((err) => console.error('Error fetching chapters:', err));
   }, [period]);
 
+  // Add chapter
   const addChapter = async () => {
     if (!newChapterName.trim()) return;
-    const res = await fetch(`${API_BASE}/chapters`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ period, name: newChapterName }),
-    });
-    const data = await res.json();
-    setChapters([...chapters, data]);
-    setNewChapterName('');
+    try {
+      const data = await api.post('/chapters', {
+        period,
+        name: newChapterName,
+      });
+      setChapters([...chapters, data]);
+      setNewChapterName('');
+    } catch (error) {
+      console.error('Error adding chapter:', error);
+    }
   };
 
+  // Delete chapter
   const deleteChapter = async (id) => {
-    await fetch(`${API_BASE}/chapters/${id}`, { method: 'DELETE' });
-    setChapters(chapters.filter((ch) => ch._id !== id));
+    try {
+      await api.del(`/chapters/${id}`);
+      setChapters(chapters.filter((ch) => ch._id !== id));
+    } catch (error) {
+      console.error('Error deleting chapter:', error);
+    }
   };
 
+  // Start editing
   const startEdit = (chapter) => {
     setEditChapterId(chapter._id);
     setEditChapterName(chapter.name);
   };
 
+  // Save edit
   const saveEdit = async () => {
-    const res = await fetch(`${API_BASE}/chapters/${editChapterId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: editChapterName }),
-    });
-    const updated = await res.json();
-    setChapters(chapters.map((ch) => (ch._id === updated._id ? updated : ch)));
-    setEditChapterId(null);
-    setEditChapterName('');
+    try {
+      const updated = await api.put(`/chapters/${editChapterId}`, {
+        name: editChapterName,
+      });
+      setChapters(
+        chapters.map((ch) => (ch._id === updated._id ? updated : ch))
+      );
+      setEditChapterId(null);
+      setEditChapterName('');
+    } catch (error) {
+      console.error('Error updating chapter:', error);
+    }
   };
 
+  // Handle drag & drop reorder
   const handleDragEnd = async (result) => {
     if (!result.destination) return;
+
     const reordered = Array.from(chapters);
     const [moved] = reordered.splice(result.source.index, 1);
     reordered.splice(result.destination.index, 0, moved);
+
     const updated = reordered.map((ch, index) => ({ ...ch, order: index }));
     setChapters(updated);
 
-    await fetch(`${API_BASE}/chapters/reorder`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reorderedChapters: updated }),
-    });
+    try {
+      await api.put('/chapters/reorder', { reorderedChapters: updated });
+    } catch (error) {
+      console.error('Error reordering chapters:', error);
+    }
   };
 
   return (
