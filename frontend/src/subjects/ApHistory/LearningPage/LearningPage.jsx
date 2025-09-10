@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { api } from '../apiClient'; // ✅ use helper functions
+import { api } from '../../../apiClient'; // ✅ use helper functions
 
 function LearningPage() {
   const { id } = useParams(); // chapterId

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { api } from '../apiClient'; // ✅ use centralized API helper
+import { api } from '../../../apiClient'; //✅ use centralized API helper
 
 function SubtopicPage() {
   const { id } = useParams();
