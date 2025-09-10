@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-
-const API_BASE = 'http://localhost:5000';
+import { api } from '../../../apiClient'; //✅ use centralized API helper
 
 function SubtopicPage() {
   const { id } = useParams();
@@ -14,59 +13,77 @@ function SubtopicPage() {
   const [openAnswers, setOpenAnswers] = useState({});
   const [openMenus, setOpenMenus] = useState({});
 
+  // Close menus if click outside
   useEffect(() => {
     const handleClickOutside = () => setOpenMenus({});
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
+  // Fetch notes
   useEffect(() => {
-    fetch(`${API_BASE}/notes/${id}`)
-      .then((res) => res.json())
-      .then(setNotes);
+    api
+      .get(`/notes/${id}`)
+      .then(setNotes)
+      .catch((err) => console.error('Error fetching notes:', err));
   }, [id]);
 
+  // Add note
   const addNote = async () => {
     if (!newQ.trim() || !newA.trim()) return;
-    const res = await fetch(`${API_BASE}/notes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subtopicId: id, question: newQ, answer: newA }),
-    });
-    const data = await res.json();
-    setNotes([...notes, data]);
-    setNewQ('');
-    setNewA('');
+    try {
+      const data = await api.post('/notes', {
+        subtopicId: id,
+        question: newQ,
+        answer: newA,
+      });
+      setNotes([...notes, data]);
+      setNewQ('');
+      setNewA('');
+    } catch (error) {
+      console.error('Error adding note:', error);
+    }
   };
 
+  // Delete note
   const deleteNote = async (noteId) => {
-    await fetch(`${API_BASE}/notes/${noteId}`, { method: 'DELETE' });
-    setNotes(notes.filter((n) => n._id !== noteId));
+    try {
+      await api.del(`/notes/${noteId}`);
+      setNotes(notes.filter((n) => n._id !== noteId));
+    } catch (error) {
+      console.error('Error deleting note:', error);
+    }
   };
 
+  // Start editing
   const startEdit = (note) => {
     setEditId(note._id);
     setEditQ(note.question);
     setEditA(note.answer);
   };
 
+  // Save edit
   const saveEdit = async () => {
-    const res = await fetch(`${API_BASE}/notes/${editId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question: editQ, answer: editA }),
-    });
-    const updated = await res.json();
-    setNotes(notes.map((n) => (n._id === updated._id ? updated : n)));
-    setEditId(null);
-    setEditQ('');
-    setEditA('');
+    try {
+      const updated = await api.put(`/notes/${editId}`, {
+        question: editQ,
+        answer: editA,
+      });
+      setNotes(notes.map((n) => (n._id === updated._id ? updated : n)));
+      setEditId(null);
+      setEditQ('');
+      setEditA('');
+    } catch (error) {
+      console.error('Error updating note:', error);
+    }
   };
 
+  // Toggle answer visibility
   const toggleAnswer = (id) => {
     setOpenAnswers({ ...openAnswers, [id]: !openAnswers[id] });
   };
 
+  // Toggle menu
   const toggleMenu = (id) => {
     setOpenMenus({ ...openMenus, [id]: !openMenus[id] });
   };
